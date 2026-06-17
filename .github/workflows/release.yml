@@ -1,13 +1,13 @@
 name: Release
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
-  release:
-    types:
-      - published
 
 jobs:
-  publish:
+  release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -27,6 +27,17 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
+      - name: Compute release metadata
+        id: meta
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          TS="$(date -u +'%Y%m%d-%H%M%S')"
+          TAG="main-${TS}-${SHORT_SHA}"
+          VERSION="$(node -p "require('./package.json').version")"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "name=main snapshot ${TS} (${SHORT_SHA})" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
       - name: Run verification
         run: |
           npm run check
@@ -36,8 +47,28 @@ jobs:
       - name: Build release artifacts
         run: npm run package:release
 
+      - name: Check npm publish eligibility
+        id: npm_check
+        run: |
+          if npm view "nucleo-ai@${{ steps.meta.outputs.version }}" version >/dev/null 2>&1; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check npm token availability
+        id: npm_token
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -n "${NODE_AUTH_TOKEN}" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish to npm
-        if: github.event_name != 'workflow_dispatch'
+        if: steps.npm_check.outputs.publish == 'true' && steps.npm_token.outputs.present == 'true'
         run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -50,10 +81,20 @@ jobs:
             artifacts/*.tgz
             artifacts/*.zip
 
-      - name: Attach artifacts to GitHub release
-        if: github.event_name == 'release'
+      - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.name }}
+          target_commitish: ${{ github.sha }}
+          prerelease: ${{ github.event_name != 'workflow_dispatch' }}
+          generate_release_notes: true
+          body: |
+            Automated release for `${{ github.sha }}` on `main`.
+
+            Package version: `${{ steps.meta.outputs.version }}`
+            npm publish eligible: `${{ steps.npm_check.outputs.publish }}`
+            npm token present: `${{ steps.npm_token.outputs.present }}`
           files: |
             artifacts/*.tgz
             artifacts/*.zip

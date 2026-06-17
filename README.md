@@ -1,6 +1,18 @@
 # nucleo-ai
 
-`nucleo-ai` is a TypeScript CLI and bundled Codex skill for searching, ranking, customizing, and integrating Nucleo icons in SaaS apps, web apps, and React projects.
+`nucleo-ai` is a TypeScript CLI and bundled Codex skill for searching, ranking, customizing, and integrating [Nucleo icons](https://nucleoapp.com/) in SaaS apps, web apps, and React projects.
+
+## Overview
+
+I built this because AI coding agents and LLMs were consistently ignoring Nucleo, even when a project clearly benefited from its icon quality and breadth. I kept having to repeat the same prompts: use Nucleo, search the right family, match the existing UI style, prefer the premium pack when available, and generate React-friendly output instead of random generic icons.
+
+[Nucleo](https://nucleoapp.com/) is especially strong for polished product UI, and the premium packs are excellent when you want a more distinctive UX instead of the same overused icon sets every other app reaches for. The problem was not the icon library. The problem was that agents had no reliable workflow for discovering, ranking, and reusing those icons inside real codebases.
+
+`nucleo-ai` solves that by turning Nucleo into an agent-friendly system:
+
+- A CLI that can inspect a local Nucleo library, search icons, compare variants, generate assets, and recommend React usage.
+- A Codex skill that teaches lower-cost models and coding agents how to make good icon choices without needing repeated manual prompting.
+- Project memory so agents can stay visually consistent after the first good decision.
 
 ## What it ships
 
@@ -54,7 +66,7 @@ This produces:
 ## GitHub Actions
 
 - `.github/workflows/ci.yml` runs typecheck, tests, build, skill validation, and artifact packaging on pushes and pull requests.
-- `.github/workflows/release.yml` builds artifacts and publishes to npm on tags like `v0.1.0` or on GitHub Release publish events.
+- `.github/workflows/release.yml` creates a new GitHub release snapshot on every push to `main`, uploads the npm and skill artifacts, and only publishes to npm when the current `package.json` version has not already been published.
 
 To publish to npm from GitHub Actions, add an `NPM_TOKEN` repository secret.
 
