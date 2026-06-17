@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  release:
+    types:
+      - published
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Run verification
+        run: |
+          npm run check
+          npm run test
+          npm run validate:skill
+
+      - name: Build release artifacts
+        run: npm run package:release
+
+      - name: Publish to npm
+        if: github.event_name != 'workflow_dispatch'
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nucleo-ai-release
+          path: |
+            artifacts/*.tgz
+            artifacts/*.zip
+
+      - name: Attach artifacts to GitHub release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/*.tgz
+            artifacts/*.zip

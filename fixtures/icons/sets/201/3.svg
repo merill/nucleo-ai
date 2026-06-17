@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <g class="nc-icon-wrapper">
+    <path d="M4 20H20" fill="#000"/>
+    <path d="M6 18V10H9V18H6Z" fill="#000"/>
+    <path d="M11 18V6H14V18H11Z" fill="#000" data-color="color-2"/>
+    <path d="M16 18V12H19V18H16Z" fill="#000"/>
+  </g>
+</svg>

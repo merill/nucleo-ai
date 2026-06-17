@@ -1,0 +1,4 @@
+interface:
+  display_name: "Nucleo Icons"
+  short_description: "Search and guide Nucleo icon usage"
+  default_prompt: "Use $nucleo-icons to find, compare, and integrate Nucleo icons in a React or web app project."
